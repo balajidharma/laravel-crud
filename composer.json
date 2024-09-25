@@ -1,0 +1,31 @@
+{
+    "name": "balajidharma/laravel-crud",
+    "description": "Laravel form builder",
+    "license": "MIT",
+    "keywords": ["crud","laravel","laravel-crud", "laravel-framework"],
+    "authors": [
+        {
+            "name": "Balaji Dharmaraja",
+            "homepage": "https://github.com/balajidharma"
+        }
+    ],
+    "require": {
+        "illuminate/support": "^10.0|^11.0",
+        "balajidharma/laravel-form-builder": "^1.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "BalajiDharma\\LaravelCrud\\": "src"
+        },
+        "files": [
+            "src/helpers.php"
+        ]
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "BalajiDharma\\LaravelCrud\\CrudServiceProvider"
+            ]
+        }
+    }
+}
