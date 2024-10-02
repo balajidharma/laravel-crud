@@ -13,12 +13,14 @@ class Column
 
     public function renderData($model, $index, $field)
     {
+        $mode = $this->grid->mode;
+
         if (isset($field['class'])) {
             $child = new $field['class']($this->grid);
             return $child->renderData($model, $index, $field);
         }
-        if (isset($field['list']['class'])) {
-            $child = new $field['list']['class']($this->grid);
+        if (isset($field[$mode]['class'])) {
+            $child = new $field[$mode]['class']($this->grid);
             return $child->renderData($model, $index, $field);
         }
         if (isset($field['value'])) {

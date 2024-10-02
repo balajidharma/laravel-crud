@@ -34,6 +34,8 @@ class CrudBuilder
 
     public $items = null;
 
+    public $item = null;
+
     public $identifier;
 
     public $results = null;
@@ -64,6 +66,8 @@ class CrudBuilder
         if (!($dataProvider instanceof Builder)) {
             throw new Exception('dataProvider must be instance of '.Builder::class);
         }
+
+        $this->mode = 'list';
 
         $this->request = request();
 
@@ -108,6 +112,23 @@ class CrudBuilder
         $this->routes = $this->buildRoutes($this->route ?? null);
 
         $this->form = $this->buildForm();
+
+        return $this;
+    }
+
+    public function show($dataProvider)
+    {
+        $this->mode = 'show';
+
+        $this->dataProvider = $dataProvider;
+
+        $this->buildRows($this->columns());
+
+        $this->setIdentifier();
+
+        $this->routes = $this->buildRoutes($this->route ?? null);
+
+        $this->item = $this->applyDisplayValue([$this->dataProvider])[0] ?? [];
 
         return $this;
     }
@@ -268,7 +289,11 @@ class CrudBuilder
         foreach ($results as $index => $result) {
             $fields = $this->fields;
             foreach ($fields as $key => $field) {
-                $displayValues[$fields[$key]['attribute']] = (new Column($this))->renderData($result, $index, $field);
+                $display = $field[$this->mode] ?? true;
+                if($display !== false) {
+                    $displayValues[$fields[$key]['attribute']] = (new Column($this))->renderData($result, $index, $field);
+                    continue;
+                }
             }
             $result->setAppends(['display_values']);
             $result->display_values = $displayValues;
@@ -316,16 +341,6 @@ class CrudBuilder
                     'identifier' => $this->identifier,
                 ]);
             case 'create':
-                return view('crud::edit', [
-                    'fields' => $this->fields,
-                    'routes' => $this->routes,
-                    'title' => $this->title,
-                    'description' => $this->description,
-                    'model' => $this->model,
-                    'identifier' => $this->identifier,
-                    'form' => $this->form,
-                    'mode' => 'create',
-                ]);
             case 'edit':
                 return view('crud::edit', [
                     'fields' => $this->fields,
@@ -335,7 +350,17 @@ class CrudBuilder
                     'model' => $this->model,
                     'identifier' => $this->identifier,
                     'form' => $this->form,
-                    'mode' => 'edit',
+                    'mode' => $this->mode,
+                ]);
+            case 'show':
+                return view('crud::show', [
+                    'item' => $this->item,
+                    'fields' => $this->fields,
+                    'routes' => $this->routes,
+                    'title' => $this->title,
+                    'description' => $this->description,
+                    'model' => $this->model,
+                    'identifier' => $this->identifier,
                 ]);
         }
     }

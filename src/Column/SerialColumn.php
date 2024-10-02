@@ -15,8 +15,8 @@ class SerialColumn extends Column
 
     public function getOffset()
     {
-        $pageSize = $this->grid->results->currentPage();
+        $pageSize = $this->grid->results?->currentPage() ?? 0;
 
-        return $pageSize == 1 ? 0 : $this->grid->results->perPage() * ($pageSize - 1);
+        return $pageSize == 1 ? 0 : $this->grid->results?->perPage() * ($pageSize - 1);
     }
 }

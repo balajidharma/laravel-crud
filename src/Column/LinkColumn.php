@@ -13,7 +13,7 @@ class LinkColumn extends Column
 
         $url = route($field['list']['route'], $this->getRouteParams($field['list']['route_params'], $model));
 
-        return '<a href="' . $url . '">' . $model->{$field["attribute"]} . '</a>';
+        return '<a href="' . $url . '" '.render_form_attributes($field['list']['attr'] ?? []).'>' . $model->{$field["attribute"]} . '</a>';
     }
 
     protected function getRouteParams($routeParams, $model)
