@@ -21,6 +21,7 @@
             <thead>
                 <tr class="bg-base-200">
                     @foreach ($fields as $field)
+                    @if ($field['list'] ?? true)
                     <th class="py-2 px-4 bg-base-50 font-bold uppercase text-sm text-left">
                         @if ($field['sortable'])
                         @include('crud::includes.sort-link', ['label' => $field['label'] ?? $field['attribute'], 'attribute' => $field['attribute']])
@@ -28,6 +29,7 @@
                         {{ $field['label'] ?? $field['attribute'] }}
                         @endif
                     </th>
+                    @endif
                     @endforeach
                     @canany(['adminUpdate', 'adminDelete'], $model)
                     <th class="py-2 px-4 bg-base-50 font-bold uppercase text-sm text-left">
@@ -40,9 +42,11 @@
             @foreach($items as $item)
                 <tr>
                     @foreach ($fields as $field)
+                    @isset($item->display_values[$field['attribute']])
                     <td class="p-4">
                         {!! $item->display_values[$field['attribute']] !!}
                     </td>
+                    @endisset
                     @endforeach
                     @canany(['adminUpdate', 'adminDelete'], $item)
                     <td class="p-4">

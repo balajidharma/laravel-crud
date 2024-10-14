@@ -44,6 +44,8 @@ class CrudBuilder
 
     public $showFieldErrors = false;
 
+    public $addtional = [];
+
     public function __construct()
     {
         $this->crudHelper = new CrudHelper();
@@ -59,6 +61,11 @@ class CrudBuilder
         if (!$this->identifier) {
             $this->identifier = strtolower(class_basename($this->dataProvider->getModel())).'_';
         }
+    }
+
+    public function setAddtional($addtional)
+    {
+        $this->addtional = array_merge($this->addtional, $addtional);
     }
 
     public function list($dataProvider)
@@ -389,14 +396,18 @@ class CrudBuilder
         foreach ($this->fields as $field) {
             if($field['filable'] && isset($field['label']))
             {
+                $attribute = $field['attribute'];
+                $type = $field['type'];
                 $fieldOptions = isset($field['form_options']) ? $field['form_options']($this->dataProvider) : [];
                 if(!isset($fieldOptions['label']))
                 {
                     $fieldOptions['label'] = $field['label'];
                 }
-                $hideField = $fieldOptions['hide_field'] ?? false;
+                $hideField = $fieldOptions['hide'] ?? false;
+                $type = $fieldOptions['type'] ?? $type;
+                $attribute = $fieldOptions['attribute'] ?? $attribute;
                 if(!$hideField) {
-                    $form->add($field['attribute'], $field['type'], $fieldOptions);
+                    $form->add($attribute, $type, $fieldOptions);
                 }
             }
         }

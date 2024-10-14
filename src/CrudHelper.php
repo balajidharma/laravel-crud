@@ -37,6 +37,7 @@ class CrudHelper
             'mediumtext' => 'textarea',
             'numeric' => 'number',
             'point' => 'text',
+            'password' => 'password',
             'set' => 'checkbox',
             'smallint' => 'number',
             'string' => 'text',
