@@ -157,9 +157,13 @@ class CrudBuilder
             if ($attribute && !isset($column['type']) && in_array($attribute, $tableColumns)) {
                 $type = DB::getSchemaBuilder()->getColumnType($tableName, $attribute);
                 $type = $this->crudHelper->getInputType($type);
-                $filable = $model->isFillable($attribute);
                 $primaryKey = $attribute == $model->getKeyName();
             }
+            if($attribute)
+            {
+                $filable = $model->isFillable($attribute);
+            }
+
             $this->fields[] = $this->mergeOptions($this->columnDefault($attribute, $type, $filable, $primaryKey), $column);
         }
     }
@@ -404,7 +408,7 @@ class CrudBuilder
                     $fieldOptions['label'] = $field['label'];
                 }
                 $hideField = $fieldOptions['hide'] ?? false;
-                $type = $fieldOptions['type'] ?? $type;
+                $type = $fieldOptions['field_type'] ?? $type;
                 $attribute = $fieldOptions['attribute'] ?? $attribute;
                 if(!$hideField) {
                     $form->add($attribute, $type, $fieldOptions);
