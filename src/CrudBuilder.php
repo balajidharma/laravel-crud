@@ -151,7 +151,7 @@ class CrudBuilder
         foreach ($columns as $column) {
             $attribute = $column['attribute'] ?? null;
             $type = $column['type'] ?? 'custom';
-            $filable = false;
+            $fillable = false;
             $primaryKey = false;
 
             if ($attribute && !isset($column['type']) && in_array($attribute, $tableColumns)) {
@@ -161,17 +161,17 @@ class CrudBuilder
             }
             if($attribute)
             {
-                $filable = $model->isFillable($attribute);
+                $fillable = $model->isFillable($attribute);
             }
 
-            $this->fields[] = $this->mergeOptions($this->columnDefault($attribute, $type, $filable, $primaryKey), $column);
+            $this->fields[] = $this->mergeOptions($this->columnDefault($attribute, $type, $fillable, $primaryKey), $column);
         }
     }
 
     private function columnDefault(
         $attribute, 
         $type = 'text', 
-        $filable = false,
+        $fillable = false,
         $primaryKey = false,
         $sortable = false,
         $filter = null)
@@ -179,7 +179,7 @@ class CrudBuilder
         return [
             'attribute' => $attribute,
             'type' => $type,
-            'filable' => $filable,
+            'fillable' => $fillable,
             'primaryKey' => $primaryKey,
             'sortable' => $sortable,
             'filter' => $filter,
@@ -398,7 +398,7 @@ class CrudBuilder
         $form->setErrorsEnabled($this->showFieldErrors);
 
         foreach ($this->fields as $field) {
-            if($field['filable'] && isset($field['label']))
+            if($field['fillable'] && isset($field['label']))
             {
                 $attribute = $field['attribute'];
                 $type = $field['type'];
