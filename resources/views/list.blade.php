@@ -1,4 +1,4 @@
-@can('adminCreate', $model)
+@can('adminCreate', new $model)
 <div class="flex flex-row-reverse d-print-none with-border">
     <a href="{{  $routes['create'] }}" class="btn btn-primary">{{ __('Add') }}</a>
 </div>
@@ -31,7 +31,7 @@
                     </th>
                     @endif
                     @endforeach
-                    @canany(['adminUpdate', 'adminDelete'], $model)
+                    @canany(['adminUpdate', 'adminDelete'], new $model)
                     <th class="py-2 px-4 bg-base-50 font-bold uppercase text-sm text-left">
                         {{ __('Actions') }}
                     </th>
