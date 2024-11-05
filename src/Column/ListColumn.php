@@ -10,16 +10,19 @@ class ListColumn extends Column
 
     public function renderData($model, $index, $field)
     {
-        $attribute = $field['list']["attribute"] ?? 'name';
-        return $this->buildList($model->{$field["attribute"]}?->pluck($attribute));
+        $attribute = $field['list']['attribute'] ?? 'name';
+
+        return $this->buildList($model->{$field['attribute']}?->pluck($attribute));
     }
 
-    function buildList($items) {
+    public function buildList($items)
+    {
         $html = '<ul>';
         foreach ($items as $item) {
-            $html .= '<li>' . trim($item) . '</li>';
+            $html .= '<li>'.trim($item).'</li>';
         }
         $html .= '</ul>';
+
         return $html;
     }
 }

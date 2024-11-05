@@ -17,10 +17,12 @@ class Column
 
         if (isset($field['class'])) {
             $child = new $field['class']($this->grid);
+
             return $child->renderData($model, $index, $field);
         }
         if (isset($field[$mode]['class'])) {
             $child = new $field[$mode]['class']($this->grid);
+
             return $child->renderData($model, $index, $field);
         }
         if (isset($field['value'])) {
@@ -32,6 +34,7 @@ class Column
         } else {
             $value = $model->{$field['attribute']};
         }
+
         return $value;
     }
 }

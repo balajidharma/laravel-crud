@@ -48,7 +48,7 @@ class CrudBuilder
 
     public function __construct()
     {
-        $this->crudHelper = new CrudHelper();
+        $this->crudHelper = new CrudHelper;
     }
 
     public function columns()
@@ -58,7 +58,7 @@ class CrudBuilder
 
     public function setIdentifier()
     {
-        if (!$this->identifier) {
+        if (! $this->identifier) {
             $this->identifier = strtolower(class_basename($this->dataProvider->getModel())).'_';
         }
     }
@@ -70,7 +70,7 @@ class CrudBuilder
 
     public function list($dataProvider)
     {
-        if (!($dataProvider instanceof Builder)) {
+        if (! ($dataProvider instanceof Builder)) {
             throw new Exception('dataProvider must be instance of '.Builder::class);
         }
 
@@ -103,7 +103,7 @@ class CrudBuilder
     {
         $this->mode = 'create';
 
-        if($dataProvider) {
+        if ($dataProvider) {
             $this->mode = 'edit';
             $this->dataProvider = $dataProvider;
         } else {
@@ -154,13 +154,12 @@ class CrudBuilder
             $fillable = false;
             $primaryKey = false;
 
-            if ($attribute && !isset($column['type']) && in_array($attribute, $tableColumns)) {
+            if ($attribute && ! isset($column['type']) && in_array($attribute, $tableColumns)) {
                 $type = DB::getSchemaBuilder()->getColumnType($tableName, $attribute);
                 $type = $this->crudHelper->getInputType($type);
                 $primaryKey = $attribute == $model->getKeyName();
             }
-            if($attribute)
-            {
+            if ($attribute) {
                 $fillable = $model->isFillable($attribute);
             }
 
@@ -169,8 +168,8 @@ class CrudBuilder
     }
 
     private function columnDefault(
-        $attribute, 
-        $type = 'text', 
+        $attribute,
+        $type = 'text',
         $fillable = false,
         $primaryKey = false,
         $sortable = false,
@@ -196,7 +195,6 @@ class CrudBuilder
         return array_replace_recursive($targetOptions, $sourceOptions);
     }
 
-
     public function applyFilters()
     {
         foreach ($this->fields as $field) {
@@ -219,7 +217,7 @@ class CrudBuilder
     public function applyFullTextSearch()
     {
         $searchQuery = $this->request->input($this->identifier.'search', '');
-        if (!empty($searchQuery)) {
+        if (! empty($searchQuery)) {
             $this->dataProvider->where(function ($query) use ($searchQuery) {
                 foreach ($this->fields as $field) {
                     if (isset($field['searchable']) && $field['searchable']) {
@@ -235,12 +233,12 @@ class CrudBuilder
         // Specify the table name or alias to avoid ambiguity
         $table = $query->getModel()->getTable();
         $qualifiedField = "{$table}.{$field}";
-    
+
         if (in_array($fieldConfig['filter'], ['like', 'ilike']) && $this->request->filled($this->identifier.$attribute)) {
-            $query->where($qualifiedField, $fieldConfig['filter'], '%' . $this->request->input($this->identifier.$attribute) . '%');
+            $query->where($qualifiedField, $fieldConfig['filter'], '%'.$this->request->input($this->identifier.$attribute).'%');
         } elseif ($fieldConfig['filter'] === 'between') {
-            $startKey = $attribute . '_start';
-            $endKey = $attribute . '_end';
+            $startKey = $attribute.'_start';
+            $endKey = $attribute.'_end';
             if ($this->request->filled($this->identifier.$startKey) && $this->request->filled($this->identifier.$endKey)) {
                 $query->whereBetween($qualifiedField, [$this->request->input($this->identifier.$startKey), $this->request->input($this->identifier.$endKey)]);
             } elseif ($this->request->filled($this->identifier.$startKey)) {
@@ -253,7 +251,6 @@ class CrudBuilder
         }
     }
 
-
     public function applySorting()
     {
         if ($this->request->has($this->identifier.'sort')) {
@@ -265,9 +262,8 @@ class CrudBuilder
             }
             $field = collect($this->fields)->where('attribute', $attribute)->first() ?? null;
 
-            if($field && isset($field['sortable']))
-            {
-                if(isset($field['relation'])) {
+            if ($field && isset($field['sortable'])) {
+                if (isset($field['relation'])) {
                     $relation = $field['relation'];
                     $relationField = $field['relation_field'] ?? $field['attribute'];
                     $this->dataProvider->whereHas($relation, function ($q) use ($relationField, $sortOrder) {
@@ -286,6 +282,7 @@ class CrudBuilder
     public function applyPagination()
     {
         $perPage = $this->request->input('per_page', 20);
+
         return $this->dataProvider->paginate($perPage);
     }
 
@@ -301,20 +298,22 @@ class CrudBuilder
             $fields = $this->fields;
             foreach ($fields as $key => $field) {
                 $display = $field[$this->mode] ?? true;
-                if($display !== false) {
+                if ($display !== false) {
                     $displayValues[$fields[$key]['attribute']] = (new Column($this))->renderData($result, $index, $field);
+
                     continue;
                 }
             }
             $result->setAppends(['display_values']);
             $result->display_values = $displayValues;
         }
+
         return $results;
     }
 
     public function buildRoutes($mainRoute = null)
     {
-        if(!$mainRoute){
+        if (! $mainRoute) {
             $routeName = request()->route()->getName();
             $mainRoute = substr($routeName, 0, strrpos($routeName, '.'));
         }
@@ -381,14 +380,14 @@ class CrudBuilder
         if ($this->mode == 'create') {
             $formOptions = [
                 'url' => $this->routes['store'],
-                'method' => 'POST'
+                'method' => 'POST',
             ];
             $submitLabel = __('Create');
         } elseif ($this->mode == 'edit') {
             $formOptions = [
                 'url' => $this->routes['update']($this->dataProvider->{$this->dataProvider->getKeyName()}),
                 'method' => 'PUT',
-                'model' => $this->dataProvider
+                'model' => $this->dataProvider,
             ];
             $submitLabel = __('Update');
         }
@@ -398,19 +397,17 @@ class CrudBuilder
         $form->setErrorsEnabled($this->showFieldErrors);
 
         foreach ($this->fields as $field) {
-            if($field['fillable'] && isset($field['label']))
-            {
+            if ($field['fillable'] && isset($field['label'])) {
                 $attribute = $field['attribute'];
                 $type = $field['type'];
                 $fieldOptions = isset($field['form_options']) ? $field['form_options']($this->dataProvider) : [];
-                if(!isset($fieldOptions['label']))
-                {
+                if (! isset($fieldOptions['label'])) {
                     $fieldOptions['label'] = $field['label'];
                 }
                 $hideField = $fieldOptions['hide'] ?? false;
                 $type = $fieldOptions['field_type'] ?? $type;
                 $attribute = $fieldOptions['attribute'] ?? $attribute;
-                if(!$hideField) {
+                if (! $hideField) {
                     $form->add($attribute, $type, $fieldOptions);
                 }
             }
@@ -422,5 +419,4 @@ class CrudBuilder
 
         return $form;
     }
-
 }

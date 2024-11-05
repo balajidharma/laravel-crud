@@ -7,7 +7,7 @@ class CrudHelper
     /**
      * Map database column types to HTML input types.
      *
-     * @param  string $columnType
+     * @param  string  $columnType
      * @return string
      */
     public function getInputType($columnType)
