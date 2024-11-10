@@ -42,11 +42,11 @@
             @foreach($items as $item)
                 <tr>
                     @foreach ($fields as $field)
-                    @isset($item->display_values[$field['attribute']])
+                    @if(array_key_exists($field['attribute'],$item->display_values))
                     <td class="p-4">
                         {!! $item->display_values[$field['attribute']] !!}
                     </td>
-                    @endisset
+                    @endif
                     @endforeach
                     @canany(['adminUpdate', 'adminDelete'], $item)
                     <td class="p-4">
