@@ -7,6 +7,7 @@ use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Http\Request;
 
 class CrudBuilder
 {
@@ -46,6 +47,8 @@ class CrudBuilder
 
     public $addtional = [];
 
+    public $redirectUrl = null;
+
     public function __construct()
     {
         $this->crudHelper = new CrudHelper;
@@ -66,6 +69,23 @@ class CrudBuilder
     public function setAddtional($addtional)
     {
         $this->addtional = array_merge($this->addtional, $addtional);
+        return $this;
+    }
+
+    public function setTitle($title)
+    {
+        $this->title = $title;
+        return $this;
+    }
+
+    public function setRedirectUrl($redirectUrl = null)
+    {
+        if ($redirectUrl) {
+            $this->redirectUrl = $redirectUrl;
+        } else {
+            $this->redirectUrl = url()->current();
+        }
+        return $this;
     }
 
     public function list($dataProvider)
@@ -319,20 +339,20 @@ class CrudBuilder
         }
 
         return [
-            'index' => route($mainRoute.'.index'),
-            'create' => route($mainRoute.'.create'),
-            'store' => route($mainRoute.'.store'),
+            'index' => $this->route($mainRoute.'.index'),
+            'create' => $this->route($mainRoute.'.create'),
+            'store' => $this->route($mainRoute.'.store'),
             'edit' => function ($id) use ($mainRoute) {
-                return route($mainRoute.'.edit', $id);
+                return $this->route($mainRoute.'.edit', $id);
             },
             'update' => function ($id) use ($mainRoute) {
-                return route($mainRoute.'.update', $id);
+                return $this->route($mainRoute.'.update', $id);
             },
             'show' => function ($id) use ($mainRoute) {
-                return route($mainRoute.'.show', $id);
+                return $this->route($mainRoute.'.show', $id);
             },
             'destroy' => function ($id) use ($mainRoute) {
-                return route($mainRoute.'.destroy', $id);
+                return $this->route($mainRoute.'.destroy', $id);
             },
         ];
     }
@@ -341,38 +361,33 @@ class CrudBuilder
     {
         switch ($view) {
             case 'list':
-                return view('crud::list', [
+                return view('crud::list', array_merge([
                     'items' => $this->items,
-                    'fields' => $this->fields,
-                    'routes' => $this->routes,
-                    'title' => $this->title,
-                    'description' => $this->description,
-                    'model' => $this->model,
-                    'identifier' => $this->identifier,
-                ]);
+                ]), $this->commonRenderData());
             case 'create':
             case 'edit':
-                return view('crud::edit', [
-                    'fields' => $this->fields,
-                    'routes' => $this->routes,
-                    'title' => $this->title,
-                    'description' => $this->description,
-                    'model' => $this->model,
-                    'identifier' => $this->identifier,
+                return view('crud::edit', array_merge([
                     'form' => $this->form,
                     'mode' => $this->mode,
-                ]);
+                ]), $this->commonRenderData());
             case 'show':
-                return view('crud::show', [
+                return view('crud::show', array_merge([
                     'item' => $this->item,
-                    'fields' => $this->fields,
-                    'routes' => $this->routes,
-                    'title' => $this->title,
-                    'description' => $this->description,
-                    'model' => $this->model,
-                    'identifier' => $this->identifier,
-                ]);
+                ]), $this->commonRenderData());
         }
+    }
+
+    protected function commonRenderData()
+    {
+        return [
+            'fields' => $this->fields,
+            'routes' => $this->routes,
+            'title' => $this->title,
+            'description' => $this->description,
+            'model' => $this->model,
+            'identifier' => $this->identifier,
+            'redirectUrl' => $this->redirectUrl
+        ];
     }
 
     public function buildForm()
@@ -413,10 +428,59 @@ class CrudBuilder
             }
         }
 
+        if($this->request->input('_redirect')){
+            $form->add('_redirect', 'hidden', [
+                'value' => $this->request->input('_redirect'),
+            ]);
+        }
+
         $form->add('submit', 'submit', [
             'label' => $submitLabel,
         ]);
 
         return $form;
+    }
+
+    public function route($name, $parameters = [], $absolute = true)
+    {
+        if ($this->redirectUrl)
+        {
+            return $this->mergeQueryParams(route($name, $parameters), ['_redirect' => $this->redirectUrl]);
+        } else {
+            return route($name, $parameters);
+        }
+    }
+
+    public function mergeQueryParams($url, array $parameters = [])
+    {
+        if (empty($parameters)) {
+            return $url;
+        }
+
+        try {
+            // Create URL instance
+            $request = Request::create($url);
+
+            // Get existing query parameters and merge with new ones
+            $query = array_merge(
+                $request->query->all(),
+                $parameters
+            );
+
+            // Remove null/empty parameters
+            $query = array_filter($query, function ($value) {
+                return !is_null($value) && $value !== '';
+            });
+
+            // Build base URL without query string
+            $baseUrl = explode('?', $url)[0];
+
+            // Return URL with merged query parameters
+            return $query
+                ? $baseUrl . '?' . http_build_query($query)
+                : $baseUrl;
+        } catch (\Exception $e) {
+            return $url;
+        }
     }
 }
