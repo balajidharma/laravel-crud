@@ -5,6 +5,7 @@ namespace BalajiDharma\LaravelCrud;
 use BalajiDharma\LaravelFormBuilder\Facades\FormBuilder;
 use Exception;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Http\Request;
@@ -49,9 +50,15 @@ class CrudBuilder
 
     public $redirectUrl = null;
 
+    public $displaySearch = true;
+
+    public $displayFilters = false;
+
     public function __construct()
     {
         $this->crudHelper = new CrudHelper;
+        $this->displaySearch = Config::get('crud.display.search', false);
+        $this->displayFilters = Config::get('crud.display.filters', true);
     }
 
     public function columns()
@@ -85,6 +92,18 @@ class CrudBuilder
         } else {
             $this->redirectUrl = url()->current();
         }
+        return $this;
+    }
+
+    public function setDisplayFilters(bool $displayFilters = true)
+    {
+        $this->displayFilters = $displayFilters;
+        return $this;
+    }
+
+    public function setDisplaySearch(bool $displaySearch = true)
+    {
+        $this->displaySearch = $displaySearch;
         return $this;
     }
 
@@ -217,8 +236,10 @@ class CrudBuilder
 
     public function applyFilters()
     {
+        $hasFilters = false;
         foreach ($this->fields as $field) {
             if (isset($field['filter'])) {
+                $hasFilters = true;
                 // Check if the field is a relationship
                 if ($this->request->filled($this->identifier.$field['attribute']) && isset($field['relation'])) {
                     $relation = $field['relation'];
@@ -231,6 +252,9 @@ class CrudBuilder
                     $this->applyFieldFilter($this->dataProvider, $field['attribute'], $field, $field['attribute']);
                 }
             }
+        }
+        if (!$hasFilters) {
+            $this->displayFilters = false;
         }
     }
 
@@ -386,7 +410,9 @@ class CrudBuilder
             'description' => $this->description,
             'model' => $this->model,
             'identifier' => $this->identifier,
-            'redirectUrl' => $this->redirectUrl
+            'redirectUrl' => $this->redirectUrl,
+            'displaySearch' => $this->displaySearch,
+            'displayFilters' => $this->displayFilters
         ];
     }
 
