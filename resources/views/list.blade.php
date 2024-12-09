@@ -1,8 +1,10 @@
-@can('adminCreate', new $model)
-<div class="flex flex-row-reverse d-print-none with-border">
-    <a href="{{  $routes['create'] }}" class="btn btn-primary">{{ __('Add') }}</a>
-</div>
-@endcan
+@isset($routes['create'])
+    @can('adminCreate', new $model)
+    <div class="flex flex-row-reverse d-print-none with-border">
+        <a href="{{  $routes['create'] }}" class="btn btn-primary">{{ __('Add') }}</a>
+    </div>
+    @endcan
+@endisset
 
 <div class="py-2">
     <div class="min-w-full  border-base-200 shadow overflow-x-auto">
@@ -15,7 +17,7 @@
                     @if ($field['list'] ?? true)
                     <th class="py-2 px-4 bg-base-50 font-bold uppercase text-sm text-left">
                         @if ($field['sortable'])
-                        @include('crud::includes.sort-link', ['label' => $field['label'] ?? $field['attribute'], 'attribute' => $field['attribute']])
+                        @include('crud::includes.sort-link', ['field' => $field])
                         @else
                         {{ $field['label'] ?? $field['attribute'] }}
                         @endif
@@ -43,6 +45,7 @@
                     <td class="p-4">
                         <form action="{{ $routes['destroy']($item->id) }}" method="POST">
                             <div>
+                                @isset ($routes['edit'])
                                 @can('adminUpdate', $item)
                                 <a href="{{$routes['edit']($item->id)}}" class="btn btn-square btn-ghost">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
@@ -50,7 +53,9 @@
                                     </svg>
                                 </a>
                                 @endcan
+                                @endisset
 
+                                @isset ($routes['destroy'])
                                 @can('adminDelete', $item)
                                 @csrf
                                 @method('DELETE')
@@ -63,6 +68,7 @@
                                     </svg>
                                 </button>
                                 @endcan
+                                @endisset
                             </div>
                         </form>
                     </td>

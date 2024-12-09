@@ -5,10 +5,10 @@ namespace BalajiDharma\LaravelCrud;
 use BalajiDharma\LaravelFormBuilder\Facades\FormBuilder;
 use Exception;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Http\Request;
 
 class CrudBuilder
 {
@@ -76,12 +76,14 @@ class CrudBuilder
     public function setAddtional($addtional)
     {
         $this->addtional = array_merge($this->addtional, $addtional);
+
         return $this;
     }
 
     public function setTitle($title)
     {
         $this->title = $title;
+
         return $this;
     }
 
@@ -92,18 +94,21 @@ class CrudBuilder
         } else {
             $this->redirectUrl = url()->current();
         }
+
         return $this;
     }
 
     public function setDisplayFilters(bool $displayFilters = true)
     {
         $this->displayFilters = $displayFilters;
+
         return $this;
     }
 
     public function setDisplaySearch(bool $displaySearch = true)
     {
         $this->displaySearch = $displaySearch;
+
         return $this;
     }
 
@@ -185,16 +190,15 @@ class CrudBuilder
         $tableName = $model->getTable();
 
         // Get all column names and their types for the table
-        $tableColumns = Schema::getColumnListing($tableName);
-
+        $tableColumns = Schema::getColumns($tableName);
         foreach ($columns as $column) {
             $attribute = $column['attribute'] ?? null;
             $type = $column['type'] ?? 'custom';
             $fillable = false;
             $primaryKey = false;
-
-            if ($attribute && ! isset($column['type']) && in_array($attribute, $tableColumns)) {
-                $type = DB::getSchemaBuilder()->getColumnType($tableName, $attribute);
+            $tableColumn = collect($tableColumns)->where('name', $attribute)->first();
+            if ($attribute && ! isset($column['type']) && $tableColumn) {
+                $type = $tableColumn['type_name'];
                 $type = $this->crudHelper->getInputType($type);
                 $primaryKey = $attribute == $model->getKeyName();
             }
@@ -253,7 +257,7 @@ class CrudBuilder
                 }
             }
         }
-        if (!$hasFilters) {
+        if (! $hasFilters) {
             $this->displayFilters = false;
         }
     }
@@ -306,19 +310,29 @@ class CrudBuilder
             }
             $field = collect($this->fields)->where('attribute', $attribute)->first() ?? null;
 
-            if ($field && isset($field['sortable'])) {
-                if (isset($field['relation'])) {
-                    $relation = $field['relation'];
-                    $relationField = $field['relation_field'] ?? $field['attribute'];
-                    $this->dataProvider->whereHas($relation, function ($q) use ($relationField, $sortOrder) {
-                        $table = $q->getModel()->getTable();
-                        $qualifiedField = "{$table}.{$relationField}";
-                        $q->orderBy($qualifiedField, $sortOrder);
-                    });
-                } else {
-                    $table = $this->dataProvider->getModel()->getTable();
-                    $this->dataProvider->orderBy("{$table}.{$attribute}", $sortOrder);
-                }
+            $this->applyFieldSort($field, $sortOrder, $attribute);
+        } else {
+            $field = collect($this->fields)->whereNotNull('defaultSort')->first() ?? null;
+            if ($field) {
+                $this->applyFieldSort($field, $field['defaultSort'], $field['attribute']);
+            }
+        }
+    }
+
+    public function applyFieldSort($field, $sortOrder, $attribute)
+    {
+        if ($field && isset($field['sortable'])) {
+            if (isset($field['relation'])) {
+                $relation = $field['relation'];
+                $relationField = $field['relation_field'] ?? $field['attribute'];
+                $this->dataProvider->whereHas($relation, function ($q) use ($relationField, $sortOrder) {
+                    $table = $q->getModel()->getTable();
+                    $qualifiedField = "{$table}.{$relationField}";
+                    $q->orderBy($qualifiedField, $sortOrder);
+                });
+            } else {
+                $table = $this->dataProvider->getModel()->getTable();
+                $this->dataProvider->orderBy("{$table}.{$attribute}", $sortOrder);
             }
         }
     }
@@ -362,23 +376,42 @@ class CrudBuilder
             $mainRoute = substr($routeName, 0, strrpos($routeName, '.'));
         }
 
-        return [
-            'index' => $this->route($mainRoute.'.index'),
-            'create' => $this->route($mainRoute.'.create'),
-            'store' => $this->route($mainRoute.'.store'),
-            'edit' => function ($id) use ($mainRoute) {
-                return $this->route($mainRoute.'.edit', $id);
-            },
-            'update' => function ($id) use ($mainRoute) {
-                return $this->route($mainRoute.'.update', $id);
-            },
-            'show' => function ($id) use ($mainRoute) {
-                return $this->route($mainRoute.'.show', $id);
-            },
-            'destroy' => function ($id) use ($mainRoute) {
-                return $this->route($mainRoute.'.destroy', $id);
-            },
-        ];
+        $routes = [];
+        foreach ($this->getActions() as $action => $value) {
+            if (!$value) {
+                continue;
+            }
+            switch ($action) {
+                case 'create':
+                    $routes['create'] = $this->route($mainRoute.'.create');
+                    break;
+                case 'store':
+                    $routes['store'] = $this->route($mainRoute.'.store');
+                    break;
+                case 'edit':
+                    $routes['edit'] = function ($id) use ($mainRoute) {
+                        return $this->route($mainRoute.'.edit', $id);
+                    };
+                    break;
+                case 'update':
+                    $routes['update'] = function ($id) use ($mainRoute) {
+                        return $this->route($mainRoute.'.update', $id);
+                    };
+                    break;
+                case 'show':
+                    $routes['show'] = function ($id) use ($mainRoute) {
+                        return $this->route($mainRoute.'.show', $id);
+                    };
+                    break;
+                case 'destroy':
+                    $routes['destroy'] = function ($id) use ($mainRoute) {
+                        return $this->route($mainRoute.'.destroy', $id);
+                    };
+                    break;
+            }
+        }
+
+        return $routes;
     }
 
     public function render($view)
@@ -412,7 +445,7 @@ class CrudBuilder
             'identifier' => $this->identifier,
             'redirectUrl' => $this->redirectUrl,
             'displaySearch' => $this->displaySearch,
-            'displayFilters' => $this->displayFilters
+            'displayFilters' => $this->displayFilters,
         ];
     }
 
@@ -454,7 +487,7 @@ class CrudBuilder
             }
         }
 
-        if($this->request->input('_redirect')){
+        if ($this->request->input('_redirect')) {
             $form->add('_redirect', 'hidden', [
                 'value' => $this->request->input('_redirect'),
             ]);
@@ -469,8 +502,7 @@ class CrudBuilder
 
     public function route($name, $parameters = [], $absolute = true)
     {
-        if ($this->redirectUrl)
-        {
+        if ($this->redirectUrl) {
             return $this->mergeQueryParams(route($name, $parameters), ['_redirect' => $this->redirectUrl]);
         } else {
             return route($name, $parameters);
@@ -495,7 +527,7 @@ class CrudBuilder
 
             // Remove null/empty parameters
             $query = array_filter($query, function ($value) {
-                return !is_null($value) && $value !== '';
+                return ! is_null($value) && $value !== '';
             });
 
             // Build base URL without query string
@@ -503,10 +535,44 @@ class CrudBuilder
 
             // Return URL with merged query parameters
             return $query
-                ? $baseUrl . '?' . http_build_query($query)
+                ? $baseUrl.'?'.http_build_query($query)
                 : $baseUrl;
         } catch (\Exception $e) {
             return $url;
         }
+    }
+
+    public function getActions()
+    {
+        $default = [
+            'index' => true,
+            'create' => true,
+            'store' => true,
+            'edit' => true,
+            'update' => true,
+            'show' => true,
+            'destroy' => true,
+        ];
+        return array_merge($default, $this->actions ?? []);
+    }
+
+
+    public function setActions(array $actions)
+    {
+        $this->actions = $actions;
+    }
+
+
+    public function getAction($action)
+    {
+        $actions = $this->getActions();
+        return $actions[$action] ?? false;
+    }
+
+    public function setAction($action, $value)
+    {
+        $actions = $this->getActions();
+        $actions[$action] = $value;
+        $this->setActions($actions);
     }
 }
