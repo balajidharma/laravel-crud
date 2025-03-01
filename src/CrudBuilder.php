@@ -7,7 +7,6 @@ use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 class CrudBuilder
@@ -378,7 +377,7 @@ class CrudBuilder
 
         $routes = [];
         foreach ($this->getActions() as $action => $value) {
-            if (!$value) {
+            if (! $value) {
                 continue;
             }
             switch ($action) {
@@ -553,19 +552,19 @@ class CrudBuilder
             'show' => true,
             'destroy' => true,
         ];
+
         return array_merge($default, $this->actions ?? []);
     }
-
 
     public function setActions(array $actions)
     {
         $this->actions = $actions;
     }
 
-
     public function getAction($action)
     {
         $actions = $this->getActions();
+
         return $actions[$action] ?? false;
     }
 
