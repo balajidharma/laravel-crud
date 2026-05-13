@@ -1,13 +1,14 @@
 @php
     $down_fill = 'lightgray';
     $up_fill = 'lightgray';
-    $attribute = $attribute ?? '';
+    $attribute = $field['attribute'] ?? '';
     $identifier = $identifier ?? '';
-    $label = $label ?? '';
-    if(request()->query($identifier.'sort') == $attribute) {
+    $defaultSort = $field['defaultSort'] ?? null;
+    $label = $field['label'] ?? $field['attribute'] ?? '';
+    if(request()->query($identifier.'sort') == $attribute || (!request()->query($identifier.'sort') && $defaultSort == 'asc')) {
         $up_fill = 'black';
     }
-    if(request()->query($identifier.'sort') == '-'.$attribute) {
+    if(request()->query($identifier.'sort') == '-'.$attribute || (!request()->query($identifier.'sort') && $defaultSort == 'desc')) {
         $down_fill = 'black';
     }
 @endphp
